@@ -21,15 +21,44 @@ export default function App() {
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '2rem', fontFamily: 'system-ui, sans-serif' }}>
       <h1 style={{ marginBottom: '1.5rem' }}>PDF Manager</h1>
-      <div style={{ display: 'flex', borderBottom: '1px solid #ddd', marginBottom: '2rem' }}>
-        <button style={tabStyle(tab === 'convert')} onClick={() => setTab('convert')}>
+      <div role="tablist" style={{ display: 'flex', borderBottom: '1px solid #ddd', marginBottom: '2rem' }}>
+        <button
+          role="tab"
+          id="tab-convert"
+          aria-selected={tab === 'convert'}
+          aria-controls="panel-convert"
+          style={tabStyle(tab === 'convert')}
+          onClick={() => setTab('convert')}
+        >
           PDF → PNG
         </button>
-        <button style={tabStyle(tab === 'merge')} onClick={() => setTab('merge')}>
+        <button
+          role="tab"
+          id="tab-merge"
+          aria-selected={tab === 'merge'}
+          aria-controls="panel-merge"
+          style={tabStyle(tab === 'merge')}
+          onClick={() => setTab('merge')}
+        >
           Merge PDFs
         </button>
       </div>
-      {tab === 'convert' ? <PdfToPng /> : <MergePdf />}
+      <div
+        role="tabpanel"
+        id="panel-convert"
+        aria-labelledby="tab-convert"
+        hidden={tab !== 'convert'}
+      >
+        <PdfToPng />
+      </div>
+      <div
+        role="tabpanel"
+        id="panel-merge"
+        aria-labelledby="tab-merge"
+        hidden={tab !== 'merge'}
+      >
+        <MergePdf />
+      </div>
     </div>
   );
 }
