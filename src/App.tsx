@@ -1,0 +1,35 @@
+import { useState } from 'react';
+import PdfToPng from './pages/PdfToPng';
+import MergePdf from './pages/MergePdf';
+
+type Tab = 'convert' | 'merge';
+
+const tabStyle = (active: boolean): React.CSSProperties => ({
+  padding: '0.5rem 1.25rem',
+  border: 'none',
+  borderBottom: active ? '2px solid #0070f3' : '2px solid transparent',
+  background: 'none',
+  cursor: 'pointer',
+  fontWeight: active ? 600 : 400,
+  fontSize: '1rem',
+  color: active ? '#0070f3' : '#555',
+});
+
+export default function App() {
+  const [tab, setTab] = useState<Tab>('convert');
+
+  return (
+    <div style={{ maxWidth: 720, margin: '0 auto', padding: '2rem', fontFamily: 'system-ui, sans-serif' }}>
+      <h1 style={{ marginBottom: '1.5rem' }}>PDF Manager</h1>
+      <div style={{ display: 'flex', borderBottom: '1px solid #ddd', marginBottom: '2rem' }}>
+        <button style={tabStyle(tab === 'convert')} onClick={() => setTab('convert')}>
+          PDF → PNG
+        </button>
+        <button style={tabStyle(tab === 'merge')} onClick={() => setTab('merge')}>
+          Merge PDFs
+        </button>
+      </div>
+      {tab === 'convert' ? <PdfToPng /> : <MergePdf />}
+    </div>
+  );
+}
