@@ -41,4 +41,8 @@ describe('mergePdfBuffers', () => {
     const result = await PDFDocument.load(merged);
     expect(result.getPageCount()).toBe(1);
   });
+
+  it('throws when called with an empty array', async () => {
+    await expect(mergePdfBuffers([])).rejects.toThrow('At least one PDF buffer is required');
+  });
 });
