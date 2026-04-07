@@ -9,6 +9,9 @@ const workerPath = _require.resolve('pdfjs-dist/legacy/build/pdf.worker.mjs');
 (GlobalWorkerOptions as { workerSrc: string }).workerSrc = pathToFileURL(workerPath).href;
 
 export async function convertPdfToImages(pdfBuffer: Buffer, dpi: number): Promise<Buffer[]> {
+  if (dpi <= 0) {
+    throw new RangeError('dpi must be greater than 0');
+  }
   const data = new Uint8Array(pdfBuffer);
   const pdf = await getDocument({ data, isEvalSupported: false }).promise;
   const scale = dpi / 72;
@@ -22,6 +25,7 @@ export async function convertPdfToImages(pdfBuffer: Buffer, dpi: number): Promis
     const context = canvas.getContext('2d') as unknown as CanvasRenderingContext2D;
     await page.render({ canvasContext: context, viewport }).promise;
     images.push(canvas.toBuffer('image/png'));
+    page.cleanup();
   }
 
   return images;

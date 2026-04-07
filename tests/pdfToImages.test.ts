@@ -28,4 +28,10 @@ describe('convertPdfToImages', () => {
     const images = await convertPdfToImages(pdfBuffer, 72);
     expect(images[0].length).toBeGreaterThan(0);
   });
+
+  it('throws when dpi is 0 or negative', async () => {
+    const pdfBuffer = await makePdf(1);
+    await expect(convertPdfToImages(pdfBuffer, 0)).rejects.toThrow('dpi must be greater than 0');
+    await expect(convertPdfToImages(pdfBuffer, -1)).rejects.toThrow('dpi must be greater than 0');
+  });
 });
