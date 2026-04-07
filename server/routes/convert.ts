@@ -15,6 +15,11 @@ router.post('/', upload.single('file'), async (req: Request, res: Response): Pro
     return;
   }
 
+  if (req.file.mimetype !== 'application/pdf' && !req.file.originalname.toLowerCase().endsWith('.pdf')) {
+    res.status(400).json({ error: 'Only PDF files are accepted' });
+    return;
+  }
+
   const dpi = Math.min(600, Math.max(72, parseInt(req.query['dpi'] as string, 10) || 150));
 
   let images: Buffer[];

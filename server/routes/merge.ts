@@ -16,6 +16,14 @@ router.post('/', upload.array('files'), async (req: Request, res: Response): Pro
     return;
   }
 
+  const nonPdf = files.find(
+    (f) => f.mimetype !== 'application/pdf' && !f.originalname.toLowerCase().endsWith('.pdf')
+  );
+  if (nonPdf) {
+    res.status(400).json({ error: `Only PDF files are accepted: "${nonPdf.originalname}" is not a PDF` });
+    return;
+  }
+
   try {
     const merged = await mergePdfBuffers(files.map((f) => f.buffer));
     res.setHeader('Content-Type', 'application/pdf');
