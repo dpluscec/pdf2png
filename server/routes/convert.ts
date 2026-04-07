@@ -4,7 +4,10 @@ import archiver from 'archiver';
 import { convertPdfToImages } from '../lib/pdfToImages.js';
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 200 * 1024 * 1024 },
+});
 
 router.post('/', upload.single('file'), async (req: Request, res: Response): Promise<void> => {
   if (!req.file) {
@@ -12,26 +15,36 @@ router.post('/', upload.single('file'), async (req: Request, res: Response): Pro
     return;
   }
 
-  const dpi = Math.min(600, Math.max(72, parseInt(req.query['dpi'] as string) || 150));
+  const dpi = Math.min(600, Math.max(72, parseInt(req.query['dpi'] as string, 10) || 150));
 
+  let images: Buffer[];
   try {
-    const images = await convertPdfToImages(req.file.buffer, dpi);
-
-    res.setHeader('Content-Type', 'application/zip');
-    res.setHeader('Content-Disposition', 'attachment; filename="pages.zip"');
-
-    const archive = archiver('zip');
-    archive.pipe(res);
-
-    images.forEach((buffer, i) => {
-      const name = `page-${String(i + 1).padStart(3, '0')}.png`;
-      archive.append(buffer, { name });
-    });
-
-    await archive.finalize();
-  } catch {
+    images = await convertPdfToImages(req.file.buffer, dpi);
+  } catch (err) {
+    console.error('PDF conversion error:', err);
     res.status(500).json({ error: 'Conversion failed' });
+    return;
   }
+
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Disposition', 'attachment; filename="pages.zip"');
+
+  const archive = archiver('zip');
+
+  archive.on('error', (err) => {
+    console.error('Archiver error:', err);
+    // Headers already sent — destroy the connection to signal error to client
+    res.destroy(err);
+  });
+
+  archive.pipe(res);
+
+  images.forEach((buffer, i) => {
+    const name = `page-${String(i + 1).padStart(3, '0')}.png`;
+    archive.append(buffer, { name });
+  });
+
+  await archive.finalize();
 });
 
 export default router;

@@ -3,7 +3,10 @@ import multer from 'multer';
 import { mergePdfBuffers } from '../lib/mergePdfs.js';
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 200 * 1024 * 1024 },
+});
 
 router.post('/', upload.array('files'), async (req: Request, res: Response): Promise<void> => {
   const files = req.files as Express.Multer.File[];
@@ -18,7 +21,8 @@ router.post('/', upload.array('files'), async (req: Request, res: Response): Pro
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="merged.pdf"');
     res.send(merged);
-  } catch {
+  } catch (err) {
+    console.error('Merge error:', err);
     res.status(500).json({ error: 'Merge failed' });
   }
 });
