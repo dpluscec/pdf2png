@@ -82,6 +82,8 @@ export default function MergePdf() {
       file,
     }));
     setItems((prev) => [...prev, ...newItems]);
+    setStatus('idle');
+    setError('');
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -114,7 +116,7 @@ export default function MergePdf() {
       a.href = url;
       a.download = 'merged.pdf';
       a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 100);
       setStatus('done');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -152,7 +154,7 @@ export default function MergePdf() {
               border: 'none',
               borderRadius: 6,
               cursor: items.length < 2 || status === 'processing' ? 'not-allowed' : 'pointer',
-              opacity: items.length < 2 ? 0.5 : 1,
+              opacity: items.length < 2 || status === 'processing' ? 0.5 : 1,
               fontSize: '1rem',
             }}
           >
