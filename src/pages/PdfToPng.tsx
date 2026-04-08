@@ -169,16 +169,20 @@ export default function PdfToPng() {
     }
   };
 
-  const handleConvertOne = async (id: string) => {
+  const handleConvertOne = useCallback(async (id: string) => {
     const entry = entries.find((e) => e.id === id);
     if (!entry) return;
     const blob = await convertEntry(entry);
     if (blob) triggerDownload(blob, `${stemName(entry.file)}-pages.zip`);
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entries, mode, dpi]);
 
-  const handleConvertAll = async () => {
+  const handleConvertAll = useCallback(async () => {
     const idleEntries = entries.filter((e) => e.status === 'idle');
-    if (idleEntries.length === 0) return;
+    if (idleEntries.length === 0) {
+      setGroupStatus('idle');
+      return;
+    }
 
     setGroupStatus('processing');
     const blobs: Blob[] = [];
@@ -208,7 +212,8 @@ export default function PdfToPng() {
 
     triggerDownload(await combined.generateAsync({ type: 'blob' }), 'converted.zip');
     setGroupStatus('done');
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entries, mode, dpi]);
 
   return (
     <div>
