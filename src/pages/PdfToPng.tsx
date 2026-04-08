@@ -114,6 +114,7 @@ export default function PdfToPng() {
       error: '',
     }));
     setEntries((prev) => [...prev, ...newEntries]);
+    setGroupStatus('idle');
   };
 
   const handleMetadata = useCallback((id: string, pageCount: number, thumbnail: string | null) => {
