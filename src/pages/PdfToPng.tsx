@@ -40,6 +40,20 @@ function stemName(file: File): string {
   return file.name.replace(/\.pdf$/i, '');
 }
 
+// Returns a folder name per entry, adding _2/_3/… suffixes for duplicates.
+function deduplicateFolderNames(entries: PdfEntry[]): string[] {
+  const stems = entries.map((e) => stemName(e.file));
+  const counts = new Map<string, number>();
+  for (const s of stems) counts.set(s, (counts.get(s) ?? 0) + 1);
+  const seen = new Map<string, number>();
+  return stems.map((s) => {
+    if (counts.get(s)! <= 1) return s;
+    const n = (seen.get(s) ?? 0) + 1;
+    seen.set(s, n);
+    return `${s}_${n}`;
+  });
+}
+
 function triggerDownload(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -144,12 +158,12 @@ export default function PdfToPng() {
 
   // Converts a single entry and returns its zip blob (or null on error).
   // Updates entry status in state.
-  const convertEntry = async (entry: PdfEntry): Promise<Blob | null> => {
+  const convertEntry = async (entry: PdfEntry, folderName?: string): Promise<Blob | null> => {
     setEntries((prev) =>
       prev.map((e) => (e.id === entry.id ? { ...e, status: 'processing', error: '' } : e))
     );
     try {
-      const folder = stemName(entry.file);
+      const folder = folderName ?? stemName(entry.file);
       const blob =
         mode === 'browser'
           ? await convertBrowser(entry.file, dpi, folder)
@@ -187,9 +201,10 @@ export default function PdfToPng() {
 
     setGroupStatus('processing');
     const blobs: Blob[] = [];
+    const folderNames = deduplicateFolderNames(idleEntries);
 
-    for (const entry of idleEntries) {
-      const blob = await convertEntry(entry);
+    for (let i = 0; i < idleEntries.length; i++) {
+      const blob = await convertEntry(idleEntries[i], folderNames[i]);
       if (blob) blobs.push(blob);
     }
 
@@ -280,10 +295,9 @@ export default function PdfToPng() {
         </button>
       </div>
 
-      {/* Drop zone — compact when files are loaded */}
+      {/* Drop zone */}
       <FileDropZone
         multiple
-        compact={entries.length > 0}
         onFiles={handleFiles}
       />
 
