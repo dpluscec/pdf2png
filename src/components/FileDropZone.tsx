@@ -1,12 +1,5 @@
 import { useRef, useState, DragEvent, ChangeEvent } from 'react';
 
-interface Props {
-  multiple?: boolean;
-  compact?: boolean;
-  onFiles: (files: File[]) => void;
-  label?: string;
-}
-
 function isPdf(file: File): boolean {
   return (
     file.type === 'application/pdf' ||
@@ -14,7 +7,25 @@ function isPdf(file: File): boolean {
   );
 }
 
-export default function FileDropZone({ multiple = false, compact = false, onFiles, label }: Props) {
+interface Props {
+  multiple?: boolean;
+  compact?: boolean;
+  onFiles: (files: File[]) => void;
+  label?: string;
+  validate?: (file: File) => boolean;
+  accept?: string;
+  rejectionMessage?: string;
+}
+
+export default function FileDropZone({
+  multiple = false,
+  compact = false,
+  onFiles,
+  label,
+  validate = isPdf,
+  accept = 'application/pdf,.pdf',
+  rejectionMessage = 'No valid files found in the dropped items.',
+}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [rejection, setRejection] = useState('');
@@ -23,18 +34,18 @@ export default function FileDropZone({ multiple = false, compact = false, onFile
     e.preventDefault();
     setDragging(false);
     const all = Array.from(e.dataTransfer.files);
-    const pdfs = all.filter(isPdf);
-    if (pdfs.length === 0) {
-      setRejection('No PDF files found in the dropped items.');
+    const valid = all.filter(validate);
+    if (valid.length === 0) {
+      setRejection(rejectionMessage);
       return;
     }
     setRejection('');
-    onFiles(pdfs);
+    onFiles(valid);
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.length) {
-      onFiles(Array.from(e.target.files));
+      onFiles(Array.from(e.target.files).filter(validate));
       e.target.value = '';
     }
   };
@@ -53,7 +64,7 @@ export default function FileDropZone({ multiple = false, compact = false, onFile
     <input
       ref={inputRef}
       type="file"
-      accept="application/pdf,.pdf"
+      accept={accept}
       multiple={multiple}
       onChange={handleChange}
       style={{ display: 'none' }}
