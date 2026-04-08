@@ -34,12 +34,15 @@ No server changes required — this is a client-only change.
 Fills the available row width automatically — more columns on wider screens.
 
 Each card contains:
+- **Drag handle** (top of card) — drag to reorder using dnd-kit (same library as Merge PDFs page)
 - **Thumbnail** (first page rendered at 72 DPI as a `<img>` data URL) when preview is on and rendering is complete, or a large PDF icon SVG (48px) when preview is off or still loading
 - **Filename** — truncated with ellipsis
 - **Page count** — shown as "N pages" once counted, "— pages" while loading
 - **Status badge** — idle / processing / done / error
 - **"Convert" button** — triggers individual conversion for this file
 - **✕ remove button** — removes file from the list
+
+Cards can be dragged to reorder. The order determines the subfolder sequence in the group zip.
 
 ---
 
@@ -153,5 +156,4 @@ The caller (`PdfToPng.tsx`) decides whether to download immediately (individual)
 ## Out of scope
 
 - Per-file DPI or mode settings
-- Reordering files in the grid
 - Progress within a single file's conversion (page N of M)
