@@ -12,6 +12,15 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
 type Mode = 'browser' | 'server';
 type Status = 'idle' | 'processing' | 'done' | 'error';
 
+export interface PdfEntry {
+  id: string;
+  file: File;
+  pageCount: number | null;
+  thumbnail: string | null;
+  status: 'idle' | 'processing' | 'done' | 'error';
+  error: string;
+}
+
 async function convertBrowser(file: File, dpi: number): Promise<void> {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
