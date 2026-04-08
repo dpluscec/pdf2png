@@ -50,7 +50,7 @@ const PdfThumbnail = memo(
         canvas.width = Math.round(viewport.width);
         canvas.height = Math.round(viewport.height);
         await page.render({
-          canvasContext: canvas.getContext('2d') as unknown as CanvasRenderingContext2D,
+          canvasContext: canvas.getContext('2d')!,
           viewport,
         }).promise;
         page.cleanup();
@@ -60,7 +60,8 @@ const PdfThumbnail = memo(
           setSrc(thumbnailSrc);
           onMetadata(pageCount, thumbnailSrc);
         }
-      })().catch(() => {
+      })().catch((err) => {
+        console.warn('PdfThumbnail: failed to load PDF', err);
         if (!cancelled) onMetadata(0, null);
       });
 
