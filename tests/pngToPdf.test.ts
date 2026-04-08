@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { PDFDocument } from 'pdf-lib';
-import { createCanvas } from 'canvas';
+import { createCanvas } from '@napi-rs/canvas';
 import { imagesToPdf } from '../server/lib/pngToPdf';
 import type { ImageInput, PageSize } from '../server/lib/pngToPdf';
 

@@ -1,4 +1,5 @@
-import { createCanvas } from 'canvas';
+import './canvasPolyfill.js';
+import { createCanvas } from '@napi-rs/canvas';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { createRequire } from 'module';
 import { pathToFileURL } from 'url';
