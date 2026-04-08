@@ -41,7 +41,7 @@ export default function FileDropZone({ multiple = false, compact = false, onFile
 
   const dragHandlers = {
     onDrop: handleDrop,
-    onDragOver: (e: DragEvent) => { e.preventDefault(); setDragging(true); },
+    onDragOver: (e: DragEvent<HTMLDivElement>) => { e.preventDefault(); setDragging(true); },
     onDragLeave: (e: DragEvent<HTMLDivElement>) => {
       if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false);
     },
