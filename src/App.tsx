@@ -2,8 +2,9 @@ import { useState } from 'react';
 import PdfToPng from './pages/PdfToPng';
 import MergePdf from './pages/MergePdf';
 import PngToPdf from './pages/PngToPdf';
+import SplitPdf from './pages/SplitPdf';
 
-type Tab = 'convert' | 'merge' | 'png-to-pdf';
+type Tab = 'convert' | 'merge' | 'png-to-pdf' | 'split';
 
 const tabStyle = (active: boolean): React.CSSProperties => ({
   padding: '0.5rem 1.25rem',
@@ -53,6 +54,16 @@ export default function App() {
         >
           PNG → PDF
         </button>
+        <button
+          role="tab"
+          id="tab-split"
+          aria-selected={tab === 'split'}
+          aria-controls="panel-split"
+          style={tabStyle(tab === 'split')}
+          onClick={() => setTab('split')}
+        >
+          Split PDF
+        </button>
       </div>
       <div
         role="tabpanel"
@@ -77,6 +88,14 @@ export default function App() {
         hidden={tab !== 'png-to-pdf'}
       >
         <PngToPdf />
+      </div>
+      <div
+        role="tabpanel"
+        id="panel-split"
+        aria-labelledby="tab-split"
+        hidden={tab !== 'split'}
+      >
+        <SplitPdf />
       </div>
     </div>
   );
