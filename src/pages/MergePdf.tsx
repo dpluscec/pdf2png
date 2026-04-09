@@ -143,7 +143,14 @@ export default function MergePdf() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#555' }}>
             <span>{items.length} {items.length === 1 ? 'file' : 'files'}</span>
             <span>·</span>
-            <button style={clearLinkStyle} onClick={() => setItems([])}>Clear all</button>
+            <button
+              type="button"
+              style={clearLinkStyle}
+              onClick={() => setItems([])}
+              aria-label={`Clear all ${items.length} ${items.length === 1 ? 'file' : 'files'}`}
+            >
+              Clear all
+            </button>
           </div>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
