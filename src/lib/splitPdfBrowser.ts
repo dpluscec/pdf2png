@@ -37,6 +37,7 @@ export async function splitPdfBrowser(file: File, config: SplitConfig): Promise<
         })
         .filter(g => g.length > 0);
     } else {
+      if (config.everyN < 1) throw new Error('everyN must be at least 1');
       groups = [];
       for (let i = 0; i < total; i += config.everyN) {
         const end = Math.min(i + config.everyN, total);
