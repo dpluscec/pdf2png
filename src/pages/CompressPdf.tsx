@@ -204,6 +204,9 @@ export default function CompressPdf() {
         }}
       >
         <fieldset style={{ border: 'none', padding: 0, margin: 0, display: 'flex', gap: '1rem' }}>
+          <legend style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>
+            Compression level
+          </legend>
           {(Object.keys(LEVEL_LABELS) as CompressionLevel[]).map((l) => (
             <label
               key={l}
