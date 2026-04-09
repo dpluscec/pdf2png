@@ -31,6 +31,7 @@ export async function splitPdf(inputBuffer: Buffer, config: SplitConfig): Promis
         })
         .filter(g => g.length > 0);
     } else {
+      if (config.everyN < 1) throw new Error('everyN must be at least 1');
       groups = [];
       for (let i = 0; i < total; i += config.everyN) {
         const end = Math.min(i + config.everyN, total);
@@ -71,7 +72,12 @@ export async function splitPdf(inputBuffer: Buffer, config: SplitConfig): Promis
     return results;
   }
 
+  if (config.mode !== 'size') {
+    throw new Error(`Unknown split mode: ${(config as { mode: string }).mode}`);
+  }
+
   // mode === 'size'
+  if (config.maxSizeMb <= 0) throw new Error('maxSizeMb must be greater than 0');
   const maxBytes = config.maxSizeMb * 1024 * 1024;
   const chunks: Buffer[] = [];
   let currentIndices: number[] = [];
