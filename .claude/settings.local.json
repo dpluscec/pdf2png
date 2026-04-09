@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vitest:*)",
+      "Bash(node --input-type=module -e \"import { getDocument, GlobalWorkerOptions } from 'C:/vso/pdf2png/.worktrees/pdf-manager/node_modules/pdfjs-dist/build/pdf.mjs'; console.log\\('getDocument:', typeof getDocument\\); console.log\\('GlobalWorkerOptions:', typeof GlobalWorkerOptions\\);\")",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)",
+      "Bash(npm test:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(where gswin64c:*)",
+      "Read(//c/Program Files/gs/**)"
+    ]
+  }
+}

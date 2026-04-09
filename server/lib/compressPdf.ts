@@ -2,7 +2,7 @@ import { compress } from 'compress-pdf';
 
 export type CompressionLevel = 'maximum' | 'balanced' | 'quality';
 
-const RESOLUTION: Record<CompressionLevel, string> = {
+const RESOLUTION: Record<CompressionLevel, 'screen' | 'ebook' | 'printer'> = {
   maximum: 'screen',
   balanced: 'ebook',
   quality: 'printer',
