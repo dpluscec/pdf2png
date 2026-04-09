@@ -25,6 +25,15 @@ interface FileItem {
   file: File;
 }
 
+const clearLinkStyle: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  color: '#0070f3',
+  fontSize: '0.875rem',
+  cursor: 'pointer',
+  padding: 0,
+};
+
 function SortableFile({ item, onRemove }: { item: FileItem; onRemove: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id });
   return (
@@ -131,6 +140,11 @@ export default function MergePdf() {
 
       {items.length > 0 && (
         <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#555' }}>
+            <span>{items.length} {items.length === 1 ? 'file' : 'files'}</span>
+            <span>·</span>
+            <button style={clearLinkStyle} onClick={() => setItems([])}>Clear all</button>
+          </div>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
               {items.map((item) => (
