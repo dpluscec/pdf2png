@@ -81,7 +81,7 @@ export async function splitPdf(inputBuffer: Buffer, config: SplitConfig): Promis
   const maxBytes = config.maxSizeMb * 1024 * 1024;
   const chunks: Buffer[] = [];
   let currentIndices: number[] = [];
-  let currentBuf = Buffer.alloc(0);
+  let currentBuf: Buffer<ArrayBufferLike> = Buffer.alloc(0);
 
   for (let i = 0; i < total; i++) {
     const testIndices = [...currentIndices, i];
