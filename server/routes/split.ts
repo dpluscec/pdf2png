@@ -54,10 +54,13 @@ router.post('/', upload.single('file'), async (req: Request, res: Response): Pro
     res.setHeader('Content-Disposition', 'attachment; filename="split.zip"');
 
     const archive = archiver('zip', { zlib: { level: 6 } });
-    archive.on('error', (err) => console.error('Archive error:', err));
+    archive.on('error', (err) => {
+      console.error('Archive error:', err);
+      res.destroy(err);
+    });
     archive.pipe(res);
     buffers.forEach((buf, i) => archive.append(buf, { name: getOutputName(config, i) }));
-    archive.finalize();
+    await archive.finalize();
   } catch (err) {
     console.error('Split error:', err);
     if (!res.headersSent) res.status(500).json({ error: 'Split failed' });
