@@ -115,9 +115,13 @@ export default function SplitPdf() {
   useEffect(() => {
     if (!file) { setTotalPages(0); setThumbnails([]); return; }
     (async () => {
-      const buf = await file.arrayBuffer();
-      const doc = await PDFDocument.load(buf);
-      setTotalPages(doc.getPageCount());
+      try {
+        const buf = await file.arrayBuffer();
+        const doc = await PDFDocument.load(buf);
+        setTotalPages(doc.getPageCount());
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to read PDF');
+      }
     })();
   }, [file]);
 
@@ -125,7 +129,7 @@ export default function SplitPdf() {
   useEffect(() => {
     if (!file || mode !== 'pages' || thumbnails.length > 0) return;
     loadThumbnails(file);
-  }, [file, mode]);
+  }, [file, mode, thumbnails.length]);
 
   async function loadThumbnails(f: File) {
     setThumbnailsLoading(true);
@@ -144,6 +148,8 @@ export default function SplitPdf() {
         thumbs.push(canvas.toDataURL('image/jpeg', 0.7));
       }
       setThumbnails(thumbs);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load page previews');
     } finally {
       setThumbnailsLoading(false);
     }
