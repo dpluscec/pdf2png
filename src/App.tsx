@@ -3,8 +3,9 @@ import PdfToPng from './pages/PdfToPng';
 import MergePdf from './pages/MergePdf';
 import PngToPdf from './pages/PngToPdf';
 import SplitPdf from './pages/SplitPdf';
+import CompressPdf from './pages/CompressPdf';
 
-type Tab = 'convert' | 'merge' | 'png-to-pdf' | 'split';
+type Tab = 'convert' | 'merge' | 'png-to-pdf' | 'split' | 'compress';
 
 const tabStyle = (active: boolean): React.CSSProperties => ({
   padding: '0.5rem 1.25rem',
@@ -64,6 +65,16 @@ export default function App() {
         >
           Split PDF
         </button>
+        <button
+          role="tab"
+          id="tab-compress"
+          aria-selected={tab === 'compress'}
+          aria-controls="panel-compress"
+          style={tabStyle(tab === 'compress')}
+          onClick={() => setTab('compress')}
+        >
+          Compress PDF
+        </button>
       </div>
       <div
         role="tabpanel"
@@ -96,6 +107,14 @@ export default function App() {
         hidden={tab !== 'split'}
       >
         <SplitPdf />
+      </div>
+      <div
+        role="tabpanel"
+        id="panel-compress"
+        aria-labelledby="tab-compress"
+        hidden={tab !== 'compress'}
+      >
+        <CompressPdf />
       </div>
     </div>
   );
