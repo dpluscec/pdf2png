@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { PDFDocument } from 'pdf-lib';
 import JSZip from 'jszip';
@@ -107,6 +107,9 @@ export default function SplitPdf() {
   // Size mode
   const [maxSizeMb, setMaxSizeMb] = useState(5);
 
+  // Thumbnail load cancellation
+  const currentFileRef = useRef<File | null>(null);
+
   // Processing state
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState('');
@@ -121,6 +124,7 @@ export default function SplitPdf() {
         setTotalPages(doc.getPageCount());
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to read PDF');
+        setStatus('error');
       }
     })();
   }, [file]);
@@ -132,26 +136,35 @@ export default function SplitPdf() {
   }, [file, mode, thumbnails.length]);
 
   async function loadThumbnails(f: File) {
+    currentFileRef.current = f;
     setThumbnailsLoading(true);
     try {
       const buf = await f.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buf), isEvalSupported: false }).promise;
-      const thumbs: string[] = [];
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: 0.15 });
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(viewport.width);
-        canvas.height = Math.round(viewport.height);
-        await page.render({ canvasContext: canvas.getContext('2d')!, viewport }).promise;
-        page.cleanup();
-        thumbs.push(canvas.toDataURL('image/jpeg', 0.7));
+      try {
+        const thumbs: string[] = [];
+        for (let i = 1; i <= pdf.numPages; i++) {
+          if (f !== currentFileRef.current) return;
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale: 0.15 });
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(viewport.width);
+          canvas.height = Math.round(viewport.height);
+          await page.render({ canvasContext: canvas.getContext('2d')!, viewport }).promise;
+          page.cleanup();
+          thumbs.push(canvas.toDataURL('image/jpeg', 0.7));
+        }
+        if (f === currentFileRef.current) setThumbnails(thumbs);
+      } finally {
+        pdf.destroy();
       }
-      setThumbnails(thumbs);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load page previews');
+      if (f === currentFileRef.current) {
+        setError(err instanceof Error ? err.message : 'Failed to load page previews');
+        setStatus('error');
+      }
     } finally {
-      setThumbnailsLoading(false);
+      if (f === currentFileRef.current) setThumbnailsLoading(false);
     }
   }
 
