@@ -47,6 +47,19 @@ function triggerDownload(blob: Blob, filename: string): void {
   setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
+function deduplicateOutputNames(entries: PdfEntry[]): string[] {
+  const names = entries.map((e) => `${stemName(e.file)}-compressed.pdf`);
+  const counts = new Map<string, number>();
+  for (const n of names) counts.set(n, (counts.get(n) ?? 0) + 1);
+  const seen = new Map<string, number>();
+  return names.map((n) => {
+    if (counts.get(n)! <= 1) return n;
+    const i = (seen.get(n) ?? 0) + 1;
+    seen.set(n, i);
+    return n.replace(/\.pdf$/, `_${i}.pdf`);
+  });
+}
+
 async function compressServer(file: File, level: CompressionLevel): Promise<Blob> {
   const formData = new FormData();
   formData.append('file', file);
@@ -107,12 +120,12 @@ export default function CompressPdf() {
     }
   };
 
-  const compressEntry = async (entry: PdfEntry): Promise<Blob | null> => {
+  const compressEntry = async (entry: PdfEntry, compressionLevel: CompressionLevel): Promise<Blob | null> => {
     setEntries((prev) =>
       prev.map((e) => (e.id === entry.id ? { ...e, status: 'processing', error: '' } : e))
     );
     try {
-      const blob = await compressServer(entry.file, level);
+      const blob = await compressServer(entry.file, compressionLevel);
       setEntries((prev) =>
         prev.map((e) => (e.id === entry.id ? { ...e, status: 'done' } : e))
       );
@@ -132,7 +145,7 @@ export default function CompressPdf() {
   const handleCompressOne = useCallback(async (id: string) => {
     const entry = entries.find((e) => e.id === id);
     if (!entry) return;
-    const blob = await compressEntry(entry);
+    const blob = await compressEntry(entry, level);
     if (blob) triggerDownload(blob, `${stemName(entry.file)}-compressed.pdf`);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entries, level]);
@@ -145,11 +158,12 @@ export default function CompressPdf() {
     }
 
     setGroupStatus('processing');
+    const outputNames = deduplicateOutputNames(idleEntries);
     const results: Array<{ blob: Blob; name: string }> = [];
 
-    for (const entry of idleEntries) {
-      const blob = await compressEntry(entry);
-      if (blob) results.push({ blob, name: `${stemName(entry.file)}-compressed.pdf` });
+    for (let i = 0; i < idleEntries.length; i++) {
+      const blob = await compressEntry(idleEntries[i], level);
+      if (blob) results.push({ blob, name: outputNames[i] });
     }
 
     if (results.length === 0) {
