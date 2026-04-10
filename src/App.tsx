@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import Home from './pages/Home';
 import PdfToPng from './pages/PdfToPng';
 import MergePdf from './pages/MergePdf';
 import PngToPdf from './pages/PngToPdf';
 import SplitPdf from './pages/SplitPdf';
 import CompressPdf from './pages/CompressPdf';
 
-type Tab = 'convert' | 'merge' | 'png-to-pdf' | 'split' | 'compress';
+type Tab = 'home' | 'convert' | 'merge' | 'png-to-pdf' | 'split' | 'compress';
 
 const tabStyle = (active: boolean): React.CSSProperties => ({
   padding: '0.5rem 1.25rem',
@@ -19,12 +20,22 @@ const tabStyle = (active: boolean): React.CSSProperties => ({
 });
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>('convert');
+  const [tab, setTab] = useState<Tab>('home');
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '2rem', fontFamily: 'system-ui, sans-serif' }}>
       <h1 style={{ marginBottom: '1.5rem' }}>PDF Manager</h1>
       <div role="tablist" style={{ display: 'flex', borderBottom: '1px solid #ddd', marginBottom: '2rem' }}>
+        <button
+          role="tab"
+          id="tab-home"
+          aria-selected={tab === 'home'}
+          aria-controls="panel-home"
+          style={tabStyle(tab === 'home')}
+          onClick={() => setTab('home')}
+        >
+          Home
+        </button>
         <button
           role="tab"
           id="tab-convert"
@@ -75,6 +86,14 @@ export default function App() {
         >
           Compress PDF
         </button>
+      </div>
+      <div
+        role="tabpanel"
+        id="panel-home"
+        aria-labelledby="tab-home"
+        hidden={tab !== 'home'}
+      >
+        <Home onNavigate={setTab} />
       </div>
       <div
         role="tabpanel"
