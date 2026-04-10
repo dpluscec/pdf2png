@@ -447,13 +447,25 @@ export default function SplitPdf() {
 
               {pageSelection === 'selected' && (
                 <>
-                  <input
-                    type="text"
-                    value={pageInputText}
-                    onChange={e => handlePageTextChange(e.target.value)}
-                    placeholder="e.g. 1, 3, 5-8"
-                    style={{ ...inputStyle, width: '100%', marginBottom: '0.75rem', boxSizing: 'border-box' }}
-                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                    <input
+                      type="text"
+                      value={pageInputText}
+                      onChange={e => handlePageTextChange(e.target.value)}
+                      placeholder="e.g. 1, 3, 5-8"
+                      style={{ ...inputStyle, flex: 1, boxSizing: 'border-box' }}
+                    />
+                    {(pageInputText !== '' || selectedPages.length > 0) && (
+                      <button
+                        type="button"
+                        style={clearLinkStyle}
+                        onClick={() => { setSelectedPages([]); setPageInputText(''); }}
+                        aria-label="Clear page selection"
+                      >
+                        Clear selection
+                      </button>
+                    )}
+                  </div>
 
                   {thumbnailsLoading && (
                     <p style={{ ...labelStyle, color: '#888' }}>Loading page previews…</p>
