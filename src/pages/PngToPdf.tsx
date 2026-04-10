@@ -321,7 +321,12 @@ export default function PngToPdf() {
             <button
               type="button"
               style={clearLinkStyle}
-              onClick={() => setItems([])}
+              onClick={() => {
+                setItems(prev => {
+                  prev.forEach(item => URL.revokeObjectURL(item.previewUrl));
+                  return [];
+                });
+              }}
               aria-label={`Clear all ${items.length} ${items.length === 1 ? 'file' : 'files'}`}
             >
               Clear all
