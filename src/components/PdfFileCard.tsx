@@ -1,7 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import PdfThumbnail from './PdfThumbnail';
-import type { PdfEntry } from '../pages/PdfToPng';
+import type { PdfEntry } from '../lib/pdfTypes';
 
 interface Props {
   entry: PdfEntry;

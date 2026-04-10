@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import * as pdfjsLib from 'pdfjs-dist';
 import {
   DndContext,
   closestCenter,
@@ -12,18 +13,18 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
+  rectSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import FileDropZone from '../components/FileDropZone';
+import PdfFileCard from '../components/PdfFileCard';
+import type { PdfEntry } from '../lib/pdfTypes';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.mjs',
+  import.meta.url
+).toString();
 
 type Status = 'idle' | 'processing' | 'done' | 'error';
-
-interface FileItem {
-  id: string;
-  file: File;
-}
 
 const clearLinkStyle: React.CSSProperties = {
   background: 'none',
@@ -34,49 +35,8 @@ const clearLinkStyle: React.CSSProperties = {
   padding: 0,
 };
 
-function SortableFile({ item, onRemove }: { item: FileItem; onRemove: () => void }) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id });
-  return (
-    <div
-      ref={setNodeRef}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.75rem',
-        padding: '0.6rem 0.75rem',
-        border: '1px solid #ddd',
-        borderRadius: 6,
-        marginBottom: '0.5rem',
-        background: '#fafafa',
-      }}
-    >
-      <span
-        {...attributes}
-        {...listeners}
-        style={{ cursor: 'grab', fontSize: '1.1rem', color: '#aaa', lineHeight: 1 }}
-        title="Drag to reorder"
-      >
-        ⠿
-      </span>
-      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {item.file.name}
-      </span>
-      <button
-        onClick={onRemove}
-        style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#999', fontSize: '1rem' }}
-        aria-label={`Remove ${item.file.name}`}
-        title="Remove"
-      >
-        ✕
-      </button>
-    </div>
-  );
-}
-
 export default function MergePdf() {
-  const [items, setItems] = useState<FileItem[]>([]);
+  const [entries, setEntries] = useState<PdfEntry[]>([]);
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState('');
 
@@ -86,21 +46,31 @@ export default function MergePdf() {
   );
 
   const handleFiles = (files: File[]) => {
-    const newItems: FileItem[] = files.map((file) => ({
+    const newEntries: PdfEntry[] = files.map((file) => ({
       id: `${file.name}-${Date.now()}-${Math.random()}`,
       file,
+      pageCount: null,
+      thumbnail: null,
+      status: 'idle',
+      error: '',
     }));
-    setItems((prev) => [...prev, ...newItems]);
+    setEntries((prev) => [...prev, ...newEntries]);
     setStatus('idle');
     setError('');
   };
 
+  const handleMetadata = useCallback((id: string, pageCount: number, thumbnail: string | null) => {
+    setEntries((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, pageCount, thumbnail } : e))
+    );
+  }, []);
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      setItems((prev) => {
-        const oldIndex = prev.findIndex((i) => i.id === active.id);
-        const newIndex = prev.findIndex((i) => i.id === over.id);
+      setEntries((prev) => {
+        const oldIndex = prev.findIndex((e) => e.id === active.id);
+        const newIndex = prev.findIndex((e) => e.id === over.id);
         return arrayMove(prev, oldIndex, newIndex);
       });
     }
@@ -111,7 +81,7 @@ export default function MergePdf() {
     setError('');
     try {
       const formData = new FormData();
-      items.forEach((item) => formData.append('files', item.file));
+      entries.forEach((entry) => formData.append('files', entry.file));
 
       const response = await fetch('/api/merge', { method: 'POST', body: formData });
       if (!response.ok) {
@@ -136,56 +106,85 @@ export default function MergePdf() {
   return (
     <div>
       <h2 style={{ marginTop: 0 }}>Merge PDFs</h2>
+
+      {/* Toolbar */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1.25rem',
+          marginBottom: '1rem',
+          flexWrap: 'wrap',
+          padding: '0.75rem',
+          background: '#f9fafb',
+          borderRadius: 8,
+          border: '1px solid #f3f4f6',
+        }}
+      >
+        <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+          {entries.length === 0
+            ? 'No files added'
+            : `${entries.length} file${entries.length === 1 ? '' : 's'} — drag to reorder`}
+        </span>
+        {entries.length > 0 && (
+          <button
+            type="button"
+            style={clearLinkStyle}
+            onClick={() => setEntries([])}
+            aria-label={`Clear all ${entries.length} ${entries.length === 1 ? 'file' : 'files'}`}
+          >
+            Clear all
+          </button>
+        )}
+        <button
+          onClick={handleMerge}
+          disabled={entries.length < 2 || status === 'processing'}
+          style={{
+            marginLeft: 'auto',
+            padding: '0.45rem 1.1rem',
+            background: '#0070f3',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 6,
+            cursor: entries.length < 2 || status === 'processing' ? 'not-allowed' : 'pointer',
+            opacity: entries.length < 2 || status === 'processing' ? 0.5 : 1,
+            fontSize: '0.875rem',
+            fontWeight: 500,
+          }}
+        >
+          {status === 'processing' ? 'Merging\u2026' : 'Merge & Download'}
+        </button>
+      </div>
+
       <FileDropZone multiple onFiles={handleFiles} label="Drop PDF files here or click to select" />
 
-      {items.length > 0 && (
-        <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#555' }}>
-            <span>{items.length} {items.length === 1 ? 'file' : 'files'}</span>
-            <span>·</span>
-            <button
-              type="button"
-              style={clearLinkStyle}
-              onClick={() => setItems([])}
-              aria-label={`Clear all ${items.length} ${items.length === 1 ? 'file' : 'files'}`}
+      {entries.length > 0 && (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={entries.map((e) => e.id)} strategy={rectSortingStrategy}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))',
+                gap: '0.75rem',
+                marginTop: '0.5rem',
+              }}
             >
-              Clear all
-            </button>
-          </div>
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-              {items.map((item) => (
-                <SortableFile
-                  key={item.id}
-                  item={item}
-                  onRemove={() => setItems((prev) => prev.filter((i) => i.id !== item.id))}
+              {entries.map((entry) => (
+                <PdfFileCard
+                  key={entry.id}
+                  entry={entry}
+                  showPreview
+                  onRemove={() => setEntries((prev) => prev.filter((e) => e.id !== entry.id))}
+                  onMetadata={handleMetadata}
                 />
               ))}
-            </SortableContext>
-          </DndContext>
-
-          <button
-            onClick={handleMerge}
-            disabled={items.length < 2 || status === 'processing'}
-            style={{
-              marginTop: '1rem',
-              padding: '0.6rem 1.5rem',
-              background: '#0070f3',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 6,
-              cursor: items.length < 2 || status === 'processing' ? 'not-allowed' : 'pointer',
-              opacity: items.length < 2 || status === 'processing' ? 0.5 : 1,
-              fontSize: '1rem',
-            }}
-          >
-            {status === 'processing' ? 'Merging…' : 'Merge & Download'}
-          </button>
-        </>
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
 
-      {status === 'done' && <p style={{ color: 'green', marginTop: '1rem' }}>Done! Check your downloads.</p>}
-      {status === 'error' && <p style={{ color: 'red', marginTop: '1rem' }}>Error: {error}</p>}
+      {status === 'done' && <p style={{ color: '#16a34a', marginTop: '1rem' }}>Done! Check your downloads.</p>}
+      {status === 'error' && <p style={{ color: '#dc2626', marginTop: '1rem' }}>Error: {error}</p>}
     </div>
   );
 }

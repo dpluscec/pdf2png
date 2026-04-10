@@ -17,7 +17,7 @@ import {
 } from '@dnd-kit/sortable';
 import FileDropZone from '../components/FileDropZone';
 import PdfFileCard from '../components/PdfFileCard';
-import type { PdfEntry } from './PdfToPng';
+import type { PdfEntry } from '../lib/pdfTypes';
 
 const clearLinkStyle: React.CSSProperties = {
   background: 'none',

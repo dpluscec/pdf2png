@@ -18,6 +18,7 @@ import {
 } from '@dnd-kit/sortable';
 import FileDropZone from '../components/FileDropZone';
 import PdfFileCard from '../components/PdfFileCard';
+import type { PdfEntry } from '../lib/pdfTypes';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.mjs',
@@ -32,15 +33,6 @@ const clearLinkStyle: React.CSSProperties = {
   cursor: 'pointer',
   padding: 0,
 };
-
-export interface PdfEntry {
-  id: string;
-  file: File;
-  pageCount: number | null;
-  thumbnail: string | null;
-  status: 'idle' | 'processing' | 'done' | 'error';
-  error: string;
-}
 
 type Mode = 'browser' | 'server';
 type GroupStatus = 'idle' | 'processing' | 'done' | 'error';
