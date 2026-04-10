@@ -154,7 +154,7 @@ export default function MergePdf() {
                 <PdfFileCard
                   key={entry.id}
                   entry={entry}
-                  showPreview={true}
+                  showPreview
                   onRemove={() => setEntries((prev) => prev.filter((e) => e.id !== entry.id))}
                   onMetadata={handleMetadata}
                 />
