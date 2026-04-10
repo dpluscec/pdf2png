@@ -84,6 +84,15 @@ const labelStyle: React.CSSProperties = {
   color: '#444',
 };
 
+const clearLinkStyle: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  color: '#0070f3',
+  fontSize: '0.875rem',
+  cursor: 'pointer',
+  padding: 0,
+};
+
 export default function SplitPdf() {
   const [file, setFile] = useState<File | null>(null);
   const [totalPages, setTotalPages] = useState(0);
@@ -95,6 +104,11 @@ export default function SplitPdf() {
   const [customRanges, setCustomRanges] = useState<RangeRow[]>([{ id: '1', from: '', to: '' }]);
   const [fixedN, setFixedN] = useState(5);
   const [mergeRanges, setMergeRanges] = useState(false);
+
+  const showClearRanges =
+    customRanges.length > 1 ||
+    customRanges[0].from !== '' ||
+    customRanges[0].to !== '';
 
   // Pages mode
   const [pageSelection, setPageSelection] = useState<PageSelection>('all');
@@ -369,12 +383,25 @@ export default function SplitPdf() {
                       )}
                     </div>
                   ))}
-                  <button
-                    onClick={() => setCustomRanges(prev => [...prev, { id: String(Date.now()), from: '', to: '' }])}
-                    style={{ fontSize: '0.875rem', color: '#0070f3', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: '0.25rem' }}
-                  >
-                    + Add range
-                  </button>
+                  <div style={{ display: 'flex', gap: '1rem', marginTop: '0.25rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => setCustomRanges(prev => [...prev, { id: String(Date.now()), from: '', to: '' }])}
+                      style={{ fontSize: '0.875rem', color: '#0070f3', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                    >
+                      + Add range
+                    </button>
+                    {showClearRanges && (
+                      <button
+                        type="button"
+                        style={clearLinkStyle}
+                        onClick={() => setCustomRanges([{ id: '1', from: '', to: '' }])}
+                        aria-label="Clear all custom ranges"
+                      >
+                        Clear ranges
+                      </button>
+                    )}
+                  </div>
                 </>
               )}
 
