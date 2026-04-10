@@ -36,7 +36,7 @@
 ## Getting Started
 
 ```bash
-git clone https://github.com/your-username/pdf2png.git
+git clone https://github.com/dpluscec/pdf2png.git
 cd pdf2png
 npm install
 npm run dev
