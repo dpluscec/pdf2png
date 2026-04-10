@@ -19,6 +19,15 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import FileDropZone from '../components/FileDropZone';
 
+const clearLinkStyle: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  color: '#0070f3',
+  fontSize: '0.875rem',
+  cursor: 'pointer',
+  padding: 0,
+};
+
 type PageSize = 'original' | 'a4' | 'letter' | 'a3';
 type Mode = 'browser' | 'server';
 type Status = 'idle' | 'processing' | 'done' | 'error';
@@ -306,6 +315,18 @@ export default function PngToPdf() {
 
       {items.length > 0 && (
         <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#555' }}>
+            <span>{items.length} {items.length === 1 ? 'file' : 'files'}</span>
+            <span>·</span>
+            <button
+              type="button"
+              style={clearLinkStyle}
+              onClick={() => setItems([])}
+              aria-label={`Clear all ${items.length} ${items.length === 1 ? 'file' : 'files'}`}
+            >
+              Clear all
+            </button>
+          </div>
           {/* Controls */}
           <div
             style={{
