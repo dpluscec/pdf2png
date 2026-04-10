@@ -6,7 +6,7 @@ import type { PdfEntry } from '../lib/pdfTypes';
 interface Props {
   entry: PdfEntry;
   showPreview: boolean;
-  onConvert: () => void;
+  onConvert?: () => void;
   onRemove: () => void;
   onMetadata: (id: string, pageCount: number, thumbnail: string | null) => void;
 }
@@ -98,28 +98,31 @@ export default function PdfFileCard({ entry, showPreview, onConvert, onRemove, o
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: '0.25rem', padding: '0.35rem 0.5rem', borderTop: '1px solid #f3f4f6' }}>
-        <button
-          onClick={onConvert}
-          disabled={entry.status === 'processing'}
-          style={{
-            flex: 1,
-            padding: '0.3rem 0',
-            background: entry.status === 'processing' ? '#e5e7eb' : '#0070f3',
-            color: entry.status === 'processing' ? '#9ca3af' : '#fff',
-            border: 'none',
-            borderRadius: 4,
-            cursor: entry.status === 'processing' ? 'not-allowed' : 'pointer',
-            fontSize: '0.75rem',
-            fontWeight: 500,
-          }}
-        >
-          Convert
-        </button>
+        {onConvert && (
+          <button
+            onClick={onConvert}
+            disabled={entry.status === 'processing'}
+            style={{
+              flex: 1,
+              padding: '0.3rem 0',
+              background: entry.status === 'processing' ? '#e5e7eb' : '#0070f3',
+              color: entry.status === 'processing' ? '#9ca3af' : '#fff',
+              border: 'none',
+              borderRadius: 4,
+              cursor: entry.status === 'processing' ? 'not-allowed' : 'pointer',
+              fontSize: '0.75rem',
+              fontWeight: 500,
+            }}
+          >
+            Convert
+          </button>
+        )}
         <button
           onClick={onRemove}
           aria-label={`Remove ${entry.file.name}`}
           title="Remove"
           style={{
+            flex: onConvert ? undefined : 1,
             padding: '0.3rem 0.5rem',
             background: 'none',
             border: '1px solid #e5e7eb',
