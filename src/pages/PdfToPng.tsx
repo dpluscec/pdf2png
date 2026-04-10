@@ -20,8 +20,6 @@ import FileDropZone from '../components/FileDropZone';
 import PdfFileCard from '../components/PdfFileCard';
 import type { PdfEntry } from '../lib/pdfTypes';
 
-export type { PdfEntry } from '../lib/pdfTypes';
-
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.mjs',
   import.meta.url
