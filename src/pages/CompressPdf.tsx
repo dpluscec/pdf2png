@@ -19,6 +19,15 @@ import FileDropZone from '../components/FileDropZone';
 import PdfFileCard from '../components/PdfFileCard';
 import type { PdfEntry } from './PdfToPng';
 
+const clearLinkStyle: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  color: '#0070f3',
+  fontSize: '0.875rem',
+  cursor: 'pointer',
+  padding: 0,
+};
+
 type CompressionLevel = 'maximum' | 'balanced' | 'quality';
 type GroupStatus = 'idle' | 'processing' | 'done' | 'error';
 
@@ -255,29 +264,43 @@ export default function CompressPdf() {
 
       {/* Card grid */}
       {entries.length > 0 && (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={entries.map((e) => e.id)} strategy={rectSortingStrategy}>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))',
-                gap: '0.75rem',
-                marginTop: '0.5rem',
-              }}
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', fontSize: '0.875rem', color: '#555' }}>
+            <span>{entries.length} {entries.length === 1 ? 'file' : 'files'}</span>
+            <span>·</span>
+            <button
+              type="button"
+              style={clearLinkStyle}
+              onClick={() => setEntries([])}
+              aria-label={`Clear all ${entries.length} ${entries.length === 1 ? 'file' : 'files'}`}
             >
-              {entries.map((entry) => (
-                <PdfFileCard
-                  key={entry.id}
-                  entry={entry}
-                  showPreview={showPreview}
-                  onConvert={() => handleCompressOne(entry.id)}
-                  onRemove={() => setEntries((prev) => prev.filter((e) => e.id !== entry.id))}
-                  onMetadata={handleMetadata}
-                />
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+              Clear all
+            </button>
+          </div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={entries.map((e) => e.id)} strategy={rectSortingStrategy}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))',
+                  gap: '0.75rem',
+                  marginTop: '0.5rem',
+                }}
+              >
+                {entries.map((entry) => (
+                  <PdfFileCard
+                    key={entry.id}
+                    entry={entry}
+                    showPreview={showPreview}
+                    onConvert={() => handleCompressOne(entry.id)}
+                    onRemove={() => setEntries((prev) => prev.filter((e) => e.id !== entry.id))}
+                    onMetadata={handleMetadata}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        </>
       )}
 
       {groupStatus === 'done' && (
