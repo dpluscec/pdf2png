@@ -152,7 +152,9 @@ export default function EditorToolbar({
   const sigTool = TOOLS.find((t) => t.id === 'signature')!;
 
   const showFill = ['rect', 'ellipse'].includes(activeTool);
+  // mono-text always uses Noto Sans Mono; font selector only applies to free text
   const showFont = ['text', 'mono-text'].includes(activeTool);
+  const showFontFamily = activeTool === 'text';
 
   return (
     <div style={sidebarStyle}>
@@ -247,19 +249,21 @@ export default function EditorToolbar({
 
       {showFont && (
         <>
-          <div title="Font" style={{ width: 40, padding: '2px 0' }}>
-            <select
-              value={style.fontFamily}
-              onChange={(e) => onStyleChange({ fontFamily: e.target.value })}
-              disabled={!hasFile}
-              style={{ width: 40, fontSize: 10, cursor: 'pointer' }}
-              aria-label="Font"
-            >
-              {FONT_FAMILIES.map((f) => (
-                <option key={f} value={f}>{f}</option>
-              ))}
-            </select>
-          </div>
+          {showFontFamily && (
+            <div title="Font" style={{ width: 40, padding: '2px 0' }}>
+              <select
+                value={style.fontFamily}
+                onChange={(e) => onStyleChange({ fontFamily: e.target.value })}
+                disabled={!hasFile}
+                style={{ width: 40, fontSize: 10, cursor: 'pointer' }}
+                aria-label="Font"
+              >
+                {FONT_FAMILIES.map((f) => (
+                  <option key={f} value={f}>{f}</option>
+                ))}
+              </select>
+            </div>
+          )}
           <div title={`Font size: ${style.fontSize}px`} style={{ width: 40, padding: '0 4px' }}>
             <input
               type="number"

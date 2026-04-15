@@ -300,10 +300,12 @@ export function installDrawingHandlers(
 export function applyStyleToSelected(canvas: Canvas, style: StyleState): void {
   const objs = canvas.getActiveObjects();
   objs.forEach((obj) => {
-    if ('stroke' in obj) obj.set('stroke', style.strokeColor);
-    if ('strokeWidth' in obj) obj.set('strokeWidth', style.strokeWidth);
-    if ('fill' in obj) {
-      obj.set('fill', obj instanceof IText ? style.strokeColor : (style.fillEnabled ? style.fillColor : 'transparent'));
+    const isText = obj instanceof IText;
+    const isImage = obj instanceof FabricImage;
+    if (!isImage) obj.set('stroke', style.strokeColor);
+    if (!isImage) obj.set('strokeWidth', style.strokeWidth);
+    if (!isImage) {
+      obj.set('fill', isText ? style.strokeColor : (style.fillEnabled ? style.fillColor : 'transparent'));
     }
     obj.set('opacity', style.opacity);
   });

@@ -65,11 +65,17 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(
     useEffect(() => {
       const bgCanvas = bgCanvasRef.current;
       if (!bgCanvas) return;
-      bgCanvas.width = width;
-      bgCanvas.height = height;
+      const vp = page.getViewport({ scale });
+      bgCanvas.width = Math.floor(vp.width);
+      bgCanvas.height = Math.floor(vp.height);
       const ctx = bgCanvas.getContext('2d')!;
-      page.render({ canvasContext: ctx, viewport }).promise.catch(console.error);
-    }, [page, viewport, width, height]);
+      const task = page.render({ canvasContext: ctx, viewport: vp });
+      task.promise.catch((err) => {
+        // Cancelled renders throw a specific error; suppress it
+        if (err?.name !== 'RenderingCancelledException') console.error(err);
+      });
+      return () => task.cancel();
+    }, [page, scale]);
 
     // ── Init Fabric.js canvas ─────────────────────────────────────────────────
     useEffect(() => {
@@ -115,8 +121,9 @@ const AnnotationCanvas = forwardRef<AnnotationCanvasHandle, Props>(
     useEffect(() => {
       const fc = fabricRef.current;
       if (!fc) return;
+      const hadSelection = fc.getActiveObjects().length > 0;
       applyStyleToSelected(fc, style);
-      onChange(pageIndex, fc.toJSON());
+      if (hadSelection) onChange(pageIndex, fc.toJSON());
     }, [style, pageIndex, onChange]);
 
     useImperativeHandle(ref, () => ({
