@@ -22,7 +22,10 @@ describe('djb2Hash', () => {
   it('only reads up to 65536 bytes', () => {
     const short = new Uint8Array(100).fill(42);
     const long = new Uint8Array(200000).fill(42);
-    // short < 65536, long > 65536 but same prefix — just verify no throw on large input
+    // short (100 bytes) hashes all its bytes; long (200000) is capped at 65536.
+    // Both have the same byte value but different lengths fed to the accumulator,
+    // so hashes must differ — this proves the cap is active.
+    expect(djb2Hash(short)).not.toBe(djb2Hash(long));
     expect(() => djb2Hash(long)).not.toThrow();
   });
 });
