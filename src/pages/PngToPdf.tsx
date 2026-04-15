@@ -18,6 +18,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import FileDropZone from '../components/FileDropZone';
+import { accumulateRotation } from '../lib/rotateUtils';
+import type { Rotation } from '../lib/rotateUtils';
 
 const clearLinkStyle: React.CSSProperties = {
   background: 'none',
@@ -36,6 +38,7 @@ interface ImageItem {
   id: string;
   file: File;
   previewUrl: string;
+  rotation: Rotation;
 }
 
 const PAGE_DIMENSIONS: Record<Exclude<PageSize, 'original'>, [number, number]> = {
@@ -78,6 +81,30 @@ function triggerDownload(blob: Blob, filename: string): void {
   setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
+async function applyRotation(file: File, rotation: Rotation): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const swap = rotation === 90 || rotation === 270;
+      const canvas = document.createElement('canvas');
+      canvas.width = swap ? img.naturalHeight : img.naturalWidth;
+      canvas.height = swap ? img.naturalWidth : img.naturalHeight;
+      const ctx = canvas.getContext('2d')!;
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+      URL.revokeObjectURL(url);
+      canvas.toBlob((blob) => {
+        if (!blob) { reject(new Error('canvas.toBlob failed')); return; }
+        blob.arrayBuffer().then(resolve).catch(reject);
+      }, 'image/png');
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Failed to load image')); };
+    img.src = url;
+  });
+}
+
 function outputFilename(items: ImageItem[]): string {
   if (items.length === 1) {
     return items[0].file.name.replace(/\.[^.]+$/, '') + '.pdf';
@@ -89,8 +116,10 @@ async function convertBrowser(items: ImageItem[], pageSize: PageSize): Promise<v
   const doc = await PDFDocument.create();
 
   for (const item of items) {
-    const buffer = await item.file.arrayBuffer();
-    const pdfImage = isJpeg(item.file)
+    const buffer = item.rotation !== 0
+      ? await applyRotation(item.file, item.rotation)
+      : await item.file.arrayBuffer();
+    const pdfImage = (item.rotation === 0 && isJpeg(item.file))
       ? await doc.embedJpg(buffer)
       : await doc.embedPng(buffer);
 
@@ -125,7 +154,15 @@ async function convertBrowser(items: ImageItem[], pageSize: PageSize): Promise<v
 
 async function convertServer(items: ImageItem[], pageSize: PageSize): Promise<void> {
   const formData = new FormData();
-  items.forEach((item) => formData.append('files', item.file));
+  for (const item of items) {
+    if (item.rotation !== 0) {
+      const buffer = await applyRotation(item.file, item.rotation);
+      const blob = new Blob([buffer], { type: 'image/png' });
+      formData.append('files', blob, item.file.name.replace(/\.[^.]+$/, '.png'));
+    } else {
+      formData.append('files', item.file);
+    }
+  }
   const response = await fetch(`/api/png-to-pdf?pageSize=${pageSize}`, {
     method: 'POST',
     body: formData,
@@ -142,10 +179,12 @@ function SortableImageCard({
   item,
   cardSize,
   onRemove,
+  onRotate,
 }: {
   item: ImageItem;
   cardSize: number;
   onRemove: () => void;
+  onRotate: (delta: 90 | -90) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
@@ -179,6 +218,7 @@ function SortableImageCard({
           objectFit: 'contain',
           display: 'block',
           background: '#f5f5f5',
+          transform: item.rotation !== 0 ? `rotate(${item.rotation}deg)` : undefined,
         }}
         draggable={false}
       />
@@ -206,20 +246,26 @@ function SortableImageCard({
         </span>
         <button
           onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove();
-          }}
-          style={{
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
-            color: '#999',
-            fontSize: '1rem',
-            flexShrink: 0,
-            lineHeight: 1,
-            padding: 0,
-          }}
+          onClick={(e) => { e.stopPropagation(); onRotate(-90); }}
+          style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#666', fontSize: '0.9rem', flexShrink: 0, lineHeight: 1, padding: 0 }}
+          aria-label="Rotate counter-clockwise"
+          title="Rotate CCW"
+        >
+          ↺
+        </button>
+        <button
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); onRotate(90); }}
+          style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#666', fontSize: '0.9rem', flexShrink: 0, lineHeight: 1, padding: 0 }}
+          aria-label="Rotate clockwise"
+          title="Rotate CW"
+        >
+          ↻
+        </button>
+        <button
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); onRemove(); }}
+          style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#999', fontSize: '1rem', flexShrink: 0, lineHeight: 1, padding: 0 }}
           aria-label={`Remove ${item.file.name}`}
           title="Remove"
         >
@@ -258,6 +304,7 @@ export default function PngToPdf() {
       id: `${file.name}-${Date.now()}-${Math.random()}`,
       file,
       previewUrl: URL.createObjectURL(file),
+      rotation: 0,
     }));
     setItems((prev) => [...prev, ...newItems]);
     setStatus('idle');
@@ -270,6 +317,14 @@ export default function PngToPdf() {
       if (item) URL.revokeObjectURL(item.previewUrl);
       return prev.filter((i) => i.id !== id);
     });
+  };
+
+  const rotateItem = (id: string, delta: 90 | -90) => {
+    setItems((prev) =>
+      prev.map((i) =>
+        i.id === id ? { ...i, rotation: accumulateRotation(i.rotation, delta) } : i
+      )
+    );
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -413,6 +468,7 @@ export default function PngToPdf() {
                     item={item}
                     cardSize={cardSize}
                     onRemove={() => removeItem(item.id)}
+                    onRotate={(delta) => rotateItem(item.id, delta)}
                   />
                 ))}
               </div>
