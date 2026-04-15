@@ -28,6 +28,7 @@ export function saveSnapshot(canvas: Canvas, history: HistoryState): void {
   history.snapshots.push(json);
   if (history.snapshots.length > 50) {
     history.snapshots.shift();
+    history.index--; // keep index pointing to the latest entry after left-shift
   } else {
     history.index++;
   }
@@ -66,6 +67,11 @@ export function deleteSelected(canvas: Canvas): void {
 
 // ── Drawing handlers ─────────────────────────────────────────────────────────
 
+/**
+ * Installs mouse event handlers on the Fabric.js canvas for all drawing tools.
+ * Re-call this when the active tool changes (it removes previous listeners first).
+ * Returns a cleanup function that removes all three mouse listeners.
+ */
 export function installDrawingHandlers(
   canvas: Canvas,
   getActiveTool: () => ToolType,
@@ -160,7 +166,7 @@ export function installDrawingHandlers(
         canvas.setActiveObject(img);
         canvas.renderAll();
         onObjectAdded();
-      });
+      }).catch(console.error);
       return;
     }
 
@@ -296,11 +302,8 @@ export function applyStyleToSelected(canvas: Canvas, style: StyleState): void {
   objs.forEach((obj) => {
     if ('stroke' in obj) obj.set('stroke', style.strokeColor);
     if ('strokeWidth' in obj) obj.set('strokeWidth', style.strokeWidth);
-    if ('fill' in obj && obj.type !== 'i-text') {
-      obj.set('fill', style.fillEnabled ? style.fillColor : 'transparent');
-    }
-    if ('fill' in obj && obj.type === 'i-text') {
-      obj.set('fill', style.strokeColor);
+    if ('fill' in obj) {
+      obj.set('fill', obj instanceof IText ? style.strokeColor : (style.fillEnabled ? style.fillColor : 'transparent'));
     }
     obj.set('opacity', style.opacity);
   });
