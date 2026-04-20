@@ -5,8 +5,9 @@ import MergePdf from './pages/MergePdf';
 import PngToPdf from './pages/PngToPdf';
 import SplitPdf from './pages/SplitPdf';
 import CompressPdf from './pages/CompressPdf';
+import EditPdf from './pages/EditPdf';
 
-type Tab = 'home' | 'convert' | 'merge' | 'png-to-pdf' | 'split' | 'compress';
+type Tab = 'home' | 'convert' | 'merge' | 'png-to-pdf' | 'split' | 'compress' | 'edit';
 
 const tabStyle = (active: boolean): React.CSSProperties => ({
   padding: '0.5rem 1.25rem',
@@ -86,6 +87,16 @@ export default function App() {
         >
           Compress PDF
         </button>
+        <button
+          role="tab"
+          id="tab-edit"
+          aria-selected={tab === 'edit'}
+          aria-controls="panel-edit"
+          style={tabStyle(tab === 'edit')}
+          onClick={() => setTab('edit')}
+        >
+          Edit PDF
+        </button>
       </div>
       <div
         role="tabpanel"
@@ -134,6 +145,14 @@ export default function App() {
         hidden={tab !== 'compress'}
       >
         <CompressPdf />
+      </div>
+      <div
+        role="tabpanel"
+        id="panel-edit"
+        aria-labelledby="tab-edit"
+        hidden={tab !== 'edit'}
+      >
+        <EditPdf />
       </div>
     </div>
   );
