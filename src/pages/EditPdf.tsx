@@ -52,7 +52,8 @@ export default function EditPdf() {
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  const [storageBytes, setStorageBytes] = useState(0);
+  const [storageBytes, setStorageBytes] = useState(() => getStorageUsageBytes());
+  const [shouldRestore, setShouldRestore] = useState(false);
 
   // One ref per page
   const canvasRefs = useRef<(AnnotationCanvasHandle | null)[]>([]);
@@ -82,32 +83,39 @@ export default function EditPdf() {
 
   const handleActivatePage = useCallback((idx: number) => setActivePageIndex(idx), []);
 
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   const handleFiles = async (files: File[]) => {
     const file = files[0];
+    setLoadError(null);
     setFilename(file.name);
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      setOriginalPdfBytes(bytes);
 
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    setOriginalPdfBytes(bytes);
+      const hash = await hashFile(file);
+      setFileHash(hash);
 
-    const hash = await hashFile(file);
-    setFileHash(hash);
+      const doc = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
+      setPdfDoc(doc);
 
-    const doc = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
-    setPdfDoc(doc);
+      const loadedPages: PDFPageProxy[] = [];
+      for (let i = 1; i <= doc.numPages; i++) {
+        loadedPages.push(await doc.getPage(i));
+      }
+      setPages(loadedPages);
+      pageAnnotationsRef.current = loadedPages.map(() => ({ objects: [] }));
+      canvasRefs.current = loadedPages.map(() => null);
 
-    const loadedPages: PDFPageProxy[] = [];
-    for (let i = 1; i <= doc.numPages; i++) {
-      loadedPages.push(await doc.getPage(i));
-    }
-    setPages(loadedPages);
-    pageAnnotationsRef.current = loadedPages.map(() => ({ objects: [] }));
-    canvasRefs.current = loadedPages.map(() => null);
-
-    // Check for saved session
-    const saved = loadAnnotations(hash);
-    if (saved && saved.pages.length > 0) {
-      setPendingSession(saved.pages);
-      setShowRestoreBanner(true);
+      // Check for saved session
+      const saved = loadAnnotations(hash);
+      if (saved && saved.pages.length > 0) {
+        setPendingSession(saved.pages);
+        setShowRestoreBanner(true);
+      }
+    } catch (err) {
+      setLoadError('Failed to load PDF. The file may be corrupted or password-protected.');
+      console.error(err);
     }
   };
 
@@ -122,18 +130,23 @@ export default function EditPdf() {
     }
   }, []);
 
+  // Deferred restore: fires after pages are rendered so canvasRefs are populated
+  useEffect(() => {
+    if (!shouldRestore || !pendingSession || pages.length === 0) return;
+    setShouldRestore(false);
+    restoreSession(pendingSession).then(() => setPendingSession(null));
+  }, [shouldRestore, pendingSession, pages, restoreSession]);
+
   useEffect(() => {
     if (!showRestoreBanner && pendingSession) {
-      // User dismissed without accepting — clear pending
       setPendingSession(null);
     }
   }, [showRestoreBanner, pendingSession]);
 
-  const handleRestore = async () => {
+  const handleRestore = () => {
     if (!pendingSession) return;
     setShowRestoreBanner(false);
-    await restoreSession(pendingSession);
-    setPendingSession(null);
+    setShouldRestore(true);
   };
 
   const handleDiscard = () => {
@@ -144,8 +157,14 @@ export default function EditPdf() {
 
   const activeSignatureUrl = signatures.find((s) => s.id === activeSignatureId)?.dataUrl ?? null;
 
-  const handleUndo = () => canvasRefs.current[activePageIndex]?.undo();
-  const handleRedo = () => canvasRefs.current[activePageIndex]?.redo();
+  const handleUndo = useCallback(
+    () => canvasRefs.current[activePageIndex]?.undo(),
+    [activePageIndex],
+  );
+  const handleRedo = useCallback(
+    () => canvasRefs.current[activePageIndex]?.redo(),
+    [activePageIndex],
+  );
 
   const handleExport = async (mode: 'flatten' | 'annotated') => {
     if (!originalPdfBytes || pages.length === 0) return;
@@ -199,8 +218,7 @@ export default function EditPdf() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePageIndex]);
+  }, [activePageIndex, handleUndo, handleRedo]);
 
   const storageKb = Math.round(storageBytes / 1024);
 
@@ -210,6 +228,12 @@ export default function EditPdf() {
 
       {!pdfDoc && (
         <FileDropZone onFiles={handleFiles} label="Drop a PDF here or click to select" />
+      )}
+
+      {loadError && (
+        <div style={{ color: '#dc2626', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, padding: '10px 16px', marginBottom: 12 }}>
+          {loadError}
+        </div>
       )}
 
       {showRestoreBanner && (
@@ -236,7 +260,7 @@ export default function EditPdf() {
 
           <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px', maxHeight: 'calc(100vh - 200px)' }}>
             {pages.map((page, i) => (
-              <div key={i}>
+              <div key={`${fileHash}-${i}`}>
                 <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>Page {i + 1}</div>
                 <AnnotationCanvas
                   ref={(el) => { canvasRefs.current[i] = el; }}
