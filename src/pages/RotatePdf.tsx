@@ -118,15 +118,19 @@ export default function RotatePdf() {
         if (entry.rotation !== 0) {
           page.setRotation(degrees(entry.rotation));
         }
-        if (entry.mirrorH) {
-          const { width } = page.getSize();
-          page.translateContent(width, 0);
-          page.scaleContent(-1, 1);
-        }
-        if (entry.mirrorV) {
-          const { height } = page.getSize();
-          page.translateContent(0, height);
-          page.scaleContent(1, -1);
+        if (entry.mirrorH || entry.mirrorV) {
+          const { width, height } = page.getSize();
+          const swap = entry.rotation === 90 || entry.rotation === 270;
+          const logicalW = swap ? height : width;
+          const logicalH = swap ? width : height;
+          if (entry.mirrorH) {
+            page.translateContent(logicalW, 0);
+            page.scaleContent(-1, 1);
+          }
+          if (entry.mirrorV) {
+            page.translateContent(0, logicalH);
+            page.scaleContent(1, -1);
+          }
         }
       }
       const bytes = await doc.save();
