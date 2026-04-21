@@ -1,6 +1,6 @@
 import { useState, CSSProperties } from 'react';
 
-type Tab = 'home' | 'convert' | 'merge' | 'png-to-pdf' | 'split' | 'compress' | 'edit';
+type Tab = 'home' | 'convert' | 'merge' | 'png-to-pdf' | 'split' | 'compress' | 'edit' | 'rotate';
 
 interface HomeProps {
   onNavigate: (tab: Tab) => void;
@@ -13,6 +13,7 @@ const tools: { tab: Exclude<Tab, 'home'>; icon: string; name: string; descriptio
   { tab: 'split',      icon: '✂️', name: 'Split PDF',     description: 'Extract pages by range, list, or target file size.' },
   { tab: 'compress',   icon: '🗜️', name: 'Compress PDF',  description: 'Reduce PDF file size with adjustable compression.' },
   { tab: 'edit', icon: '✏️', name: 'Edit PDF', description: 'Add shapes, text, and signatures to any PDF page.' },
+  { tab: 'rotate', icon: '🔄', name: 'Rotate PDF', description: 'Rotate pages and apply horizontal or vertical mirroring.' },
 ];
 
 const gridStyle: CSSProperties = {

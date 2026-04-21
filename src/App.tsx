@@ -6,8 +6,9 @@ import PngToPdf from './pages/PngToPdf';
 import SplitPdf from './pages/SplitPdf';
 import CompressPdf from './pages/CompressPdf';
 import EditPdf from './pages/EditPdf';
+import RotatePdf from './pages/RotatePdf';
 
-type Tab = 'home' | 'convert' | 'merge' | 'png-to-pdf' | 'split' | 'compress' | 'edit';
+type Tab = 'home' | 'convert' | 'merge' | 'png-to-pdf' | 'split' | 'compress' | 'edit' | 'rotate';
 
 const tabStyle = (active: boolean): React.CSSProperties => ({
   padding: '0.5rem 1.25rem',
@@ -97,6 +98,16 @@ export default function App() {
         >
           Edit PDF
         </button>
+        <button
+          role="tab"
+          id="tab-rotate"
+          aria-selected={tab === 'rotate'}
+          aria-controls="panel-rotate"
+          style={tabStyle(tab === 'rotate')}
+          onClick={() => setTab('rotate')}
+        >
+          Rotate PDF
+        </button>
       </div>
       <div
         role="tabpanel"
@@ -153,6 +164,14 @@ export default function App() {
         hidden={tab !== 'edit'}
       >
         <EditPdf />
+      </div>
+      <div
+        role="tabpanel"
+        id="panel-rotate"
+        aria-labelledby="tab-rotate"
+        hidden={tab !== 'rotate'}
+      >
+        <RotatePdf />
       </div>
     </div>
   );
