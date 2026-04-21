@@ -76,6 +76,7 @@ export default function RotatePdf() {
         page.cleanup();
         thumbs.push(canvas.toDataURL('image/jpeg', 0.7));
       }
+      await pdf.destroy();
 
       if (!cancelled) {
         setPages(newPages);
