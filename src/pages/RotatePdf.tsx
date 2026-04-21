@@ -123,14 +123,14 @@ export default function RotatePdf() {
           const swap = entry.rotation === 90 || entry.rotation === 270;
           const logicalW = swap ? height : width;
           const logicalH = swap ? width : height;
-          if (entry.mirrorH) {
-            page.translateContent(logicalW, 0);
-            page.scaleContent(-1, 1);
-          }
-          if (entry.mirrorV) {
-            page.translateContent(0, logicalH);
-            page.scaleContent(1, -1);
-          }
+          page.translateContent(
+            entry.mirrorH ? logicalW : 0,
+            entry.mirrorV ? logicalH : 0,
+          );
+          page.scaleContent(
+            entry.mirrorH ? -1 : 1,
+            entry.mirrorV ? -1 : 1,
+          );
         }
       }
       const bytes = await doc.save();
