@@ -1,6 +1,6 @@
 # PDF Manager
 
-> A local web app for converting, merging, splitting, and compressing PDFs.
+> A local web app for converting, merging, splitting, compressing, rotating, and annotating PDFs.
 
 ![PDF Manager screenshot](docs/screenshot.png)
 
@@ -17,6 +17,8 @@
 - **PNG → PDF** — Pack one or more PNG images into a single PDF document.
 - **Split PDF** — Extract pages by range, individual page list, or target file size. Downloads results as a ZIP.
 - **Compress PDF** — Reduce PDF file size with selectable compression levels, powered by Ghostscript.
+- **Rotate & Mirror PDF** — Rotate pages by 90°/180°/270° and mirror them horizontally or vertically, per-page or all at once. Downloads the transformed PDF.
+- **Edit PDF** — Annotate pages with freehand drawing, text, and shapes using a Fabric.js canvas overlay. Add signatures (draw, type, or upload). Export a flattened PDF with annotations baked in.
 
 ---
 
@@ -54,7 +56,7 @@ npm run dev
 | Frontend | React 18, TypeScript, Vite  | `src/main.tsx`     |
 | Backend  | Express, TypeScript, tsx    | `server/index.ts`  |
 
-The **PDF → PNG** tab converts entirely in-browser using `pdfjs-dist` — no server round-trip unless you select "Server" mode. All other operations (merge, split, compress, PNG → PDF) call the Express API at `/api/*`.
+The **PDF → PNG** tab converts entirely in-browser using `pdfjs-dist` — no server round-trip unless you select "Server" mode. **Edit PDF** also runs entirely in-browser using `pdfjs-dist` and Fabric.js. All other operations (merge, split, compress, PNG → PDF, rotate & mirror) call the Express API at `/api/*`.
 
 ---
 
