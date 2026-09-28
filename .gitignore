@@ -1,3 +1,6 @@
 .worktrees/
 node_modules/
 dist/
+
+# Machine-specific service registration manifest (contains local absolute paths)
+schemas/service-manifest.json
