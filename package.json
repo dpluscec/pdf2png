@@ -10,7 +10,8 @@
     "test:watch": "vitest",
     "type-check": "tsc --noEmit && tsc -p tsconfig.client.json --noEmit",
     "type-check:server": "tsc --noEmit",
-    "type-check:client": "tsc -p tsconfig.client.json --noEmit"
+    "type-check:client": "tsc -p tsconfig.client.json --noEmit",
+    "build:server": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@napi-rs/canvas": "^0.1.97",
