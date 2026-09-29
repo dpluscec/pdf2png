@@ -6,10 +6,11 @@
     "dev:server": "tsx watch server/index.ts",
     "dev:client": "vite",
     "build": "vite build",
+    "build:all": "npm run build && npm run build:server",
     "build:server": "tsc -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "type-check": "tsc --noEmit && tsc -p tsconfig.client.json --noEmit",
+    "type-check": "tsc --noEmit && tsc -p tsconfig.test.json && tsc -p tsconfig.client.json --noEmit",
     "type-check:server": "tsc --noEmit",
     "type-check:client": "tsc -p tsconfig.client.json --noEmit"
   },
